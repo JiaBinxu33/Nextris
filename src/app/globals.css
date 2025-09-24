@@ -24,3 +24,42 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* src/app/globals.css */
+
+/* 这是所有数字格子共享的样式 */
+.digit-sprite {
+  background-image: url('/sprite.png');
+  background-repeat: no-repeat;
+
+  /* 将除数 24 改为 24px，
+    这样 px / px 就会得到一个纯数字（无单位的比例）
+  */
+  --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
+
+  /* 后续的计算现在就是有效的了 */
+  width: calc(14px * var(--sprite-scale));
+  height: calc(24px * var(--sprite-scale));
+
+  background-size: calc(400px * var(--sprite-scale)) calc(186px * var(--sprite-scale));
+}
+
+/* 4. 将计算移到变量定义中，让 background-position 更简单 */
+.digit-0 { --x-pos: -75px; --y-pos: -25px; }
+.digit-1 { --x-pos: -89px; --y-pos: -25px; }
+.digit-2 { --x-pos: -103px; --y-pos: -25px; }
+.digit-3 { --x-pos: -117px; --y-pos: -25px; }
+.digit-4 { --x-pos: -131px; --y-pos: -25px; }
+.digit-5 { --x-pos: -145px; --y-pos: -25px; }
+.digit-6 { --x-pos: -159px; --y-pos: -25px; }
+.digit-7 { --x-pos: -173px; --y-pos: -25px; }
+.digit-8 { --x-pos: -187px; --y-pos: -25px; }
+.digit-9 { --x-pos: -201px; --y-pos: -25px; }
+.digit-n { --x-pos: -215px; --y-pos: -25px; }
+.digit-d { --x-pos: -243px; --y-pos: -25px; }
+.digit-d_c { --x-pos: -229px; --y-pos: -25px; }
+
+/* 5. 创建一个通用的规则来应用计算后的 background-position */
+[class^="digit-"] {
+  background-position: calc(var(--x-pos) * var(--sprite-scale)) calc(var(--y-pos) * var(--sprite-scale));
+}
