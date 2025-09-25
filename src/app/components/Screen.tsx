@@ -1,11 +1,11 @@
 "use client";
 import { observer } from "mobx-react-lite"; // 1. 导入 observer
 import { useResponsiveBlockSize } from "@/app/utils/hooks/useResponsiveBlockSize";
-import Matrix from "@/app/components/Matrix/page";
+import Matrix from "@/app/components/Matrix";
 import { useEffect, useRef } from "react"; // 2. 移除 useState
-import Number from "@/app/components/Number/page";
+import Number from "@/app/components/Number";
 import React from "react";
-import Tetromino from "@/app/components/Tetrimino/page";
+import Tetromino from "@/app/components/Tetromino";
 import { TetrominoShape } from "@/app/static/shaps";
 import { useStore } from "@/app/store";
 

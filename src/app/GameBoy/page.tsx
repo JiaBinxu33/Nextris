@@ -1,10 +1,11 @@
 "use client";
-import Screen from "@/app/components/Screen/page";
-import Tetrimino from "@/app/components/Tetrimino/page";
+import Screen from "@/app/components/Screen";
+import Tetrimino from "@/app/components/Tetromino";
 import { TetrominoShape } from "@/app/static/shaps";
 import { useState, useEffect } from "react";
 import { StoreContext, matrixStore } from "@/app/store"; // 1. 导入我们创建的 Context 和实例
 import { getRandomTetromino } from "@/app/utils/getRandomTeromino";
+import Control from "@/app/components/Control";
 
 const DashLine = ({ position }: { position: "left" | "right" }) => (
   <div className="flex gap-x-[calc(var(--block-size)*0.5)]">
@@ -34,8 +35,8 @@ export default function GameBoy() {
 
     // 2. 游戏主循环
     const gameLoop = setInterval(() => {
-      if (!matrixStore.pengZhuang()) {
-        matrixStore.moveDown();
+      if (!matrixStore.willCollide()) {
+        matrixStore.moveTetromino();
       } else {
         matrixStore.settleTetromino();
       }
@@ -112,10 +113,7 @@ export default function GameBoy() {
           <Tetrimino shape={T_MIRROR} isColumn></Tetrimino>
           <Tetrimino shape={J} isColumn></Tetrimino>
         </div>
-      </div>
-      <div>
-        <div></div>
-        <div></div>
+        <Control></Control>
       </div>
     </StoreContext.Provider>
   );

@@ -1,4 +1,4 @@
-import Block from "@/app/components/Block/page";
+import Block from "@/app/components/Block";
 import clsx from "clsx";
 
 // --- 接口和默认数据部分保持不变 ---

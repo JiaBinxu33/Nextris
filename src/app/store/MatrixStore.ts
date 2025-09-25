@@ -1,20 +1,20 @@
 // src/app/store/MatrixStore.ts
 
-import { makeAutoObservable, computed } from "mobx";
-import { GRID_HEIGHT, GRID_WIDTH } from "@/app/static/grid";
+import { makeAutoObservable, computed ,runInAction } from "mobx";
+import { GRID_HEIGHT, GRID_WIDTH, GRID_BLOCK_STATE } from "@/app/static/grid"; // 1. 导入 GRID_BLOCK_STATE
 import { SHAPE_DEFINITIONS, TetrominoShape } from "@/app/static/shaps";
 import { getRandomTetromino } from "@/app/utils/getRandomTeromino";
 
 // --- 类型定义 ---
-export type CellState = 0 | 1;
+// 2. 更新 CellState 类型，使其使用 GRID_BLOCK_STATE 的值
+export type CellState = (typeof GRID_BLOCK_STATE)[keyof typeof GRID_BLOCK_STATE];
 export type Grid = CellState[][];
+type Direction = 'down' | 'left' | 'right';
 
-
-
+// 3. 更新 createEmptyGrid 以使用 HIDDEN 状态
 const createEmptyGrid = (): Grid =>
-  Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(0));
+  Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN));
 
-// 定义当前下落方块的状态
 interface ICurrentTetromino {
   shape: TetrominoShape;
   position: {
@@ -23,59 +23,12 @@ interface ICurrentTetromino {
   };
 }
 
-function checkCollision(
-    tetromino: ICurrentTetromino | null,
-    grid: Grid
-  ): boolean {
-    // 如果没有方块，自然不会碰撞
-    if (!tetromino) {
-      return false;
-    }
-  
-    const { shape, position } = tetromino;
-    const shapeLayout = SHAPE_DEFINITIONS[shape] || [];
-  
-    // 遍历组成形状的每一个小方块
-    for (const posKey of shapeLayout) {
-      const [row, col] = posKey.split('-').map(Number);
-  
-      // 计算出小方块在主棋盘上的绝对坐标
-      const absoluteX = position.x + col - 2; // 微调以使其在2x4格子中居中
-      const absoluteY = position.y + row - 1;
-  
-      // --- 开始进行碰撞检测 ---
-  
-      // a. 检测是否碰到了左右边界
-      if (absoluteX < 0 || absoluteX >= GRID_WIDTH) {
-        return true; // 碰撞了
-      }
-  
-      // b. 检测是否碰到了下边界
-      if (absoluteY >= GRID_HEIGHT) {
-        return true; // 碰撞了
-      }
-      
-      // c. 排除掉顶部还在屏幕外的情况 (y < 0)
-      if (absoluteY < 0) {
-          continue; // 这个小方块还在屏幕上方，跳过对它的检测
-      }
-  
-      // d. 检测是否碰到了【已经固定】的方块
-      //    grid[absoluteY] 确保我们检查的行存在
-      if (grid[absoluteY] && grid[absoluteY][absoluteX] === 1) {
-        return true; // 碰撞了
-      }
-    }
-  
-    // 如果所有小方块都没有碰到任何东西，则返回 false
-    return false;
-  }
-
 export class MatrixStore {
   // --- 状态 (State) ---
   grid: Grid = createEmptyGrid();
-  currentTetromino: ICurrentTetromino | null = null; // 新增：代表正在下落的方块
-  nextTetromino:ICurrentTetromino | null = null; 
+  currentTetromino: ICurrentTetromino | null = null;
+  nextTetromino: ICurrentTetromino | null = null;
+
   constructor() {
     makeAutoObservable(this, {
       renderGrid: computed,
@@ -83,7 +36,6 @@ export class MatrixStore {
   }
 
   // --- 计算值 (Computed Value) ---
-  // 它会自动将 grid 和 currentTetromino 合并成最终的渲染数据
   get renderGrid(): Grid {
     const gridCopy = this.grid.map(row => [...row]);
 
@@ -97,7 +49,8 @@ export class MatrixStore {
         const blockY = position.y + row - 1;
 
         if (gridCopy[blockY] && gridCopy[blockY][blockX] !== undefined) {
-          gridCopy[blockY][blockX] = 1;
+          // 4. 将正在下落的方块渲染为 VISIBLE 状态
+          gridCopy[blockY][blockX] = GRID_BLOCK_STATE.VISIBLE;
         }
       });
     }
@@ -107,58 +60,119 @@ export class MatrixStore {
 
   // --- 动作 (Actions) ---
   
+  // 5. 重构 settleTetromino 以实现 SETTLED 效果
   settleTetromino = () => {
-    // 1. 检查是否有正在下落的方块，如果没有则什么都不做
     if (!this.currentTetromino) {
       return;
     }
 
-    // 2. 直接用 renderGrid 的当前值来更新 grid
-    //    这就是“把数据全部存上去”的核心步骤
-    this.grid = this.renderGrid;
+    // --- 步骤 1: 将当前方块以“SETTLED”状态立即“画”在背景网格上 ---
+    const settledGrid = this.renderGrid;
+    for (let y = 0; y < settledGrid.length; y++) {
+      for (let x = 0; x < settledGrid[y].length; x++) {
+        // 将新固定的 VISIBLE 块变成 SETTLED 块，用于播放闪烁动画
+        if (
+          settledGrid[y][x] === GRID_BLOCK_STATE.VISIBLE &&
+          this.grid[y][x] === GRID_BLOCK_STATE.HIDDEN
+        ) {
+          settledGrid[y][x] = GRID_BLOCK_STATE.SETTLED;
+        }
+      }
+    }
+    this.grid = settledGrid; // UI 立即显示闪烁（变淡）的方块
 
-    // 用下一块替换当前块
+    // --- 步骤 2: 立即切换到下一个方块，让玩家恢复控制 ---
     this.currentTetromino = this.nextTetromino;
-
-    // 继续生成下一块
     this.spawnNextTetromino(getRandomTetromino());
+
+    // --- 步骤 3: 在后台调度一个“清理”任务 ---
+    // 这个任务只负责将闪烁的方块变成永久固化的方块，不影响玩家当前的操作
+    setTimeout(() => {
+      runInAction(() => {
+        const finalGrid = this.grid.map((row) =>
+          row.map((cell) =>
+            cell === GRID_BLOCK_STATE.SETTLED ? GRID_BLOCK_STATE.VISIBLE : cell
+          )
+        );
+        this.grid = finalGrid; // 更新网格，闪烁效果结束
+      });
+    }, 200); // 闪烁动画的持续时间
   };
 
-  // 新增：生成一个新的方块并放置在顶部
   spawnTetromino = (shape: TetrominoShape) => {
     this.currentTetromino = {
       shape: shape,
-      position: { x: 4, y: 0 }, // 这是方块的初始位置
+      position: { x: 4, y: 0 },
     };
   };
 
-    // 新增：生成一个新的方块并放置在顶部
-    spawnNextTetromino = (shape: TetrominoShape) => {
-      this.nextTetromino = {
-        shape: shape,
-        position: { x: 4, y: 0 }, // 这是方块的初始位置
-      };
+  spawnNextTetromino = (shape: TetrominoShape) => {
+    this.nextTetromino = {
+      shape: shape,
+      position: { x: 4, y: 0 },
     };
+  };
   
-  moveDown = () => {
-    // 检查当前是否存在一个正在下落的方块
-    if (this.currentTetromino) {
-      // 直接修改 position.y 的值，MobX 会自动追踪这个变化
+  willCollide = (direction: Direction = 'down') => {
+    if (!this.currentTetromino) {
+      return false;
+    }
+
+    let ghostPosition = { ...this.currentTetromino.position };
+    if (direction === 'down') {
+      ghostPosition.y += 1;
+    } else if (direction === 'left') {
+      ghostPosition.x -= 1;
+    } else if (direction === 'right') {
+      ghostPosition.x += 1;
+    }
+
+    const ghostTetromino = {
+      ...this.currentTetromino,
+      position: ghostPosition,
+    };
+
+    const { shape, position } = ghostTetromino;
+    const shapeLayout = SHAPE_DEFINITIONS[shape] || [];
+
+    for (const posKey of shapeLayout) {
+      const [row, col] = posKey.split('-').map(Number);
+      const absoluteX = position.x + col - 2;
+      const absoluteY = position.y + row - 1;
+
+      if (absoluteX < 0 || absoluteX >= GRID_WIDTH) {
+        return true;
+      }
+      if (absoluteY >= GRID_HEIGHT) {
+        return true;
+      }
+      if (absoluteY < 0) {
+        continue;
+      }
+      
+      // 6. 更新碰撞检测逻辑：任何非 HIDDEN 的块都是障碍物
+      if (this.grid[absoluteY] && this.grid[absoluteY][absoluteX] !== GRID_BLOCK_STATE.HIDDEN) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  moveTetromino = (direction:Direction = "down") =>{
+    if (!this.currentTetromino){
+      return
+    }
+    if(direction === 'right' && !this.willCollide("right")){
+      this.currentTetromino.position.x += 1;
+    }
+    if(direction === 'left' && !this.willCollide("left")){
+      this.currentTetromino.position.x -= 1;
+    }
+    if(direction === 'down' && !this.willCollide("down")){
       this.currentTetromino.position.y += 1;
     }
-  };
-
-  pengZhuang = (): boolean => {
-    // 创建一个“幽灵”方块，代表下一步的位置
-    const ghostTetromino = this.currentTetromino ? {
-      ...this.currentTetromino,
-      position: {
-        ...this.currentTetromino.position,
-        y: this.currentTetromino.position.y + 1, // 试探下一行
-      }
-    } : null;
-
-    // 使用我们新的、规范化的函数进行检测
-    return checkCollision(ghostTetromino, this.grid);
   }
+
+
 }
