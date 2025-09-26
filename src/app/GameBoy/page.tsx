@@ -1,11 +1,12 @@
 "use client";
 import Screen from "@/app/components/Screen";
-import Tetrimino from "@/app/components/Tetromino";
+import Tetromino from "@/app/components/Tetromino";
 import { TetrominoShape } from "@/app/static/shaps";
 import { useState, useEffect } from "react";
 import { StoreContext, matrixStore } from "@/app/store"; // 1. 导入我们创建的 Context 和实例
 import { getRandomTetromino } from "@/app/utils/getRandomTeromino";
 import Control from "@/app/components/Control";
+import { COLUMN_COLS, COLUMN_ROWS } from "@/app/static/shaps";
 
 const DashLine = ({ position }: { position: "left" | "right" }) => (
   <div className="flex gap-x-[calc(var(--block-size)*0.5)]">
@@ -92,12 +93,13 @@ export default function GameBoy() {
         left-[calc(var(--block-size)*0.5)]
         "
         >
-          <Tetrimino shape={Z} isColumn></Tetrimino>
-          <Tetrimino shape={T_MIRROR} isColumn></Tetrimino>
-          <Tetrimino shape={O} isColumn></Tetrimino>
-          <Tetrimino shape={I} isColumn></Tetrimino>
-          <Tetrimino shape={T} isColumn></Tetrimino>
-          <Tetrimino shape={L} isColumn></Tetrimino>
+          {/* 恢复使用 isColumn prop */}
+          <Tetromino shape={Z} isColumn />
+          <Tetromino shape={T_MIRROR} isColumn />
+          <Tetromino shape={O} isColumn />
+          <Tetromino shape={I} isColumn />
+          <Tetromino shape={T} isColumn />
+          <Tetromino shape={L} isColumn />
         </div>
         <div
           className="
@@ -106,12 +108,13 @@ export default function GameBoy() {
         right-[calc(var(--block-size)*0.5)]
         "
         >
-          <Tetrimino shape={S} isColumn></Tetrimino>
-          <Tetrimino shape={T} isColumn></Tetrimino>
-          <Tetrimino shape={O} isColumn></Tetrimino>
-          <Tetrimino shape={I_MIRROR} isColumn></Tetrimino>
-          <Tetrimino shape={T_MIRROR} isColumn></Tetrimino>
-          <Tetrimino shape={J} isColumn></Tetrimino>
+          {/* 恢复使用 isColumn prop */}
+          <Tetromino shape={S} isColumn />
+          <Tetromino shape={T} isColumn />
+          <Tetromino shape={O} isColumn />
+          <Tetromino shape={I_MIRROR} isColumn />
+          <Tetromino shape={T_MIRROR} isColumn />
+          <Tetromino shape={J} isColumn />
         </div>
         <Control></Control>
       </div>

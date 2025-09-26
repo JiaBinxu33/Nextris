@@ -3,21 +3,17 @@ import clsx from "clsx";
 import { GRID_BLOCK_STATE } from "@/app/static/grid";
 import type { CellState } from "@/app/store/MatrixStore";
 
-// 1. 更新 Props 接口，使其可以同时接受新旧两种属性
 interface IBlockProps {
-  state?: CellState; // 新的 state 属性 (用于 Matrix)
-  isActive?: boolean; // 旧的 isActive 属性 (用于 Tetromino)
+  state?: CellState;
+  isActive?: boolean;
   isHidden?: boolean;
 }
 
 export default function Block({
-  state, // 直接接收 state
-  isActive, // 同时接收 isActive
+  state,
+  isActive,
   isHidden = false,
 }: IBlockProps) {
-  // 2. 核心逻辑：决定最终要使用的状态
-  //    - 如果 state prop 被传递了 (来自 Matrix), 则优先使用 state。
-  //    - 如果 state prop 未定义 (来自 Tetromino), 则根据 isActive 的值来推断状态。
   const finalState =
     state !== undefined
       ? state
@@ -25,11 +21,10 @@ export default function Block({
       ? GRID_BLOCK_STATE.VISIBLE
       : GRID_BLOCK_STATE.HIDDEN;
 
-  // 3. 根据最终计算出的 finalState 来决定透明度
   const opacityClass = clsx({
-    "opacity-0": isHidden,
+    "opacity-0": isHidden || finalState === GRID_BLOCK_STATE.CLEARING, // CLEARING 状态时也设为透明
     "opacity-100": !isHidden && finalState === GRID_BLOCK_STATE.VISIBLE,
-    "opacity-50": !isHidden && finalState === GRID_BLOCK_STATE.SETTLED,
+    "opacity-75": !isHidden && finalState === GRID_BLOCK_STATE.SETTLED,
     "opacity-20": !isHidden && finalState === GRID_BLOCK_STATE.HIDDEN,
   });
 
@@ -42,6 +37,7 @@ export default function Block({
         border-black 
         border-solid 
         relative 
+        transition-opacity duration-50 /* 让闪烁更快速 */
         ${opacityClass}
       `}
       style={{

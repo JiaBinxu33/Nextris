@@ -111,7 +111,12 @@ const Screen = observer(
             </p>
             <div className="flex justify-end">
               {/* 6. 使用我们准备好的、绝对一致的 shapeToDisplay 变量 */}
-              <Tetromino shape={shapeToDisplay} showBackground />
+              <Tetromino
+                shape={shapeToDisplay}
+                showBackground
+                cols={4}
+                rows={2}
+              />
             </div>
           </div>
         </div>

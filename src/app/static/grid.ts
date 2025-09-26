@@ -4,7 +4,8 @@ export const GRID_HEIGHT: number = 20;
 export const GAP_RATIO: number = 0.1;
 
 export const GRID_BLOCK_STATE = {
-    HIDDEN: 0,   // 隐藏的，或背景
-    VISIBLE: 1,  // 可见的，已固化的普通方块
-    SETTLED: 2,  // 刚刚固定的方块 (瞬时状态)
-  }
+  HIDDEN: 0,   // 隐藏的，或背景
+  VISIBLE: 1,  // 可见的，已固化的普通方块
+  SETTLED: 2,  // 刚刚固定的方块 (瞬时状态)
+  CLEARING: 3, // 新增：正在被消除的行 (用于闪烁)
+}
