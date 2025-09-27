@@ -1,13 +1,26 @@
+"use client";
+import { observer } from "mobx-react-lite"; // 1. 导入 observer
 import React from "react";
-import ActionButton from "@/app/components/ActionButton"; // 导入我们刚创建的通用按钮
+import ActionButton from "@/app/components/ActionButton";
+import { useStore } from "@/app/store";
 
-export default function Reset() {
+// 2. 将组件用 observer() 包裹
+const Reset = observer(() => {
+  const { gameOver } = useStore();
+
+  const handleClick = () => {
+    gameOver();
+  };
+
   return (
     <ActionButton
       label="重玩(R)"
       color="bg-red-600"
       size={2.5}
       fontSize={0.8}
+      onClick={handleClick}
     />
   );
-}
+});
+
+export default Reset;

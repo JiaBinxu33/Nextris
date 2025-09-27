@@ -1,3 +1,6 @@
+// 我们不再需要 createEnumObject 了，可以删除这一行
+// import createEnumObject from "@/app/utils/createEnumObject"
+
 export const COLUMN_COLS = 2;
 export const COLUMN_ROWS = 4;
 
@@ -14,15 +17,14 @@ export enum TetrominoShape {
   I_MIRROR = "im",
 }
 
-// 核心修改：将 SHAPE_DEFINITIONS 的类型改为 string[][]
-// 每个子数组代表一种旋转形态
-export const SHAPE_DEFINITIONS: { [key: string]: string[][] } = {
+// 方块形状的定义保持不变
+export const SHAPE_DEFINITIONS: Record<TetrominoShape, string[][]> = {
   [TetrominoShape.O]: [
-    ["1-2", "1-3", "2-2", "2-3"] // O 型只有一种形态
+    ["1-2", "1-3", "2-2", "2-3"]
   ],
   [TetrominoShape.I]: [
-      ["2-1", "2-2", "2-3", "2-4"], // 水平
-      ["1-2", "2-2", "3-2", "4-2"]  // 垂直
+      ["2-1", "2-2", "2-3", "2-4"],
+      ["1-2", "2-2", "3-2", "4-2"]
   ],
   [TetrominoShape.L]: [
       ["1-3", "2-1", "2-2", "2-3"],
@@ -50,7 +52,35 @@ export const SHAPE_DEFINITIONS: { [key: string]: string[][] } = {
       ["2-1", "2-2", "2-3", "3-2"],
       ["1-2", "2-1", "2-2", "3-2"]
   ],
-  // 装饰用的方块保持不变 (2x4)
   [TetrominoShape.T_MIRROR]: [["1-1", "1-2", "1-3", "2-2"]],
   [TetrominoShape.I_MIRROR]: [["2-1", "2-2", "2-3", "2-4"]],
 };
+
+// --- 核心修改：只保留 SPEEDS 数组作为唯一数据源 ---
+
+/**
+ * 游戏速度数组。数组索引 + 1 即为游戏等级。
+ * 例如：SPEEDS[0] 是等级 1 的速度。
+ */
+export const SPEEDS = [
+  800, // 等级 1
+  650, // 等级 2
+  500, // 等级 3
+  370, // 等级 4
+  250, // 等级 5
+  160, // 等级 6
+] as const;
+
+
+/**
+ * 游戏等级的类型定义。
+ * 用于在代码中约束等级的取值范围，确保类型安全。
+ */
+export type GameLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+
+/**
+ * 消除行数对应的得分。
+ * 索引 0 对应消除 1 行，索引 3 对应消除 4 行。
+ */
+export const CLEAR_POINTS = [100, 300, 700, 1500];

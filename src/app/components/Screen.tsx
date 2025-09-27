@@ -1,32 +1,28 @@
 "use client";
-import { observer } from "mobx-react-lite"; // 1. 导入 observer
+import { observer } from "mobx-react-lite";
+import React, { useEffect, useRef } from "react";
+
 import { useResponsiveBlockSize } from "@/app/utils/hooks/useResponsiveBlockSize";
 import Matrix from "@/app/components/Matrix";
-import { useEffect, useRef } from "react"; // 2. 移除 useState
 import Number from "@/app/components/Number";
-import React from "react";
 import Tetromino from "@/app/components/Tetromino";
-import { TetrominoShape } from "@/app/static/shaps";
+import { TetrominoShape, SPEEDS } from "@/app/static/shaps";
 import { useStore } from "@/app/store";
 
-// 3. 将整个组件用 observer 包裹起来
 const Screen = observer(
   ({ onBlockSizeChange }: { onBlockSizeChange?: (size: number) => void }) => {
     const gameContainerRef = useRef<HTMLDivElement>(null);
     const blockSize = useResponsiveBlockSize(gameContainerRef);
-    const { nextTetromino } = useStore(); // 4. 直接从 store 中获取下一个方块的状态
-
+    const { nextTetromino, clearedLines, speedLevel } = useStore();
     useEffect(() => {
       if (typeof onBlockSizeChange === "function") {
         onBlockSizeChange(blockSize);
       }
     }, [blockSize, onBlockSizeChange]);
 
-    // 5. 关键：创建一个渲染用的变量。
     //    在服务器和客户端初次渲染时，nextTetromino 可能是 null，
     //    我们提供一个固定的 O 形作为备用，确保初次渲染结果一致。
     const shapeToDisplay = nextTetromino?.shape || TetrominoShape.O;
-
     return (
       <div
         ref={gameContainerRef}
@@ -57,6 +53,7 @@ const Screen = observer(
 
         {/* 内容层 */}
         <Matrix />
+
         <div
           className="absolute right-0 flex flex-col"
           style={{
@@ -66,7 +63,6 @@ const Screen = observer(
             gap: `calc(var(--block-size) * 0.5)`,
           }}
         >
-          {/* 得分、消除行、级别部分保持不变... */}
           <div>
             <p
               className="text-[var(--block-size)]"
@@ -87,7 +83,7 @@ const Screen = observer(
             >
               消除行
             </p>
-            <Number number={0}></Number>
+            <Number number={clearedLines}></Number>
           </div>
           <div>
             <p
@@ -98,7 +94,7 @@ const Screen = observer(
             >
               级别
             </p>
-            <Number number={0} length={1}></Number>
+            <Number number={speedLevel} length={1}></Number>
           </div>
           <div>
             <p

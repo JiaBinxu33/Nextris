@@ -63,3 +63,28 @@ body {
 [class^="digit-"] {
   background-position: calc(var(--x-pos) * var(--sprite-scale)) calc(var(--y-pos) * var(--sprite-scale));
 }
+
+/* 新增 Welcome 组件的样式 */
+.dragon-sprite {
+  background-image: url('/sprite.png'); /* 确保你的 public 目录下有这张图 */
+  background-repeat: no-repeat;
+  --sprite-scale: calc(var(--block-size) * 4 / 80px); /* 80px 是原始龙的宽度 */
+
+  background-size: calc(400px * var(--sprite-scale)) calc(186px * var(--sprite-scale));
+}
+
+.dragon-sprite.r1, .dragon-sprite.l1 {
+  background-position: calc(0px * var(--sprite-scale)) calc(-100px * var(--sprite-scale));
+}
+.dragon-sprite.r2, .dragon-sprite.l2 {
+  background-position: calc(-100px * var(--sprite-scale)) calc(-100px * var(--sprite-scale));
+}
+.dragon-sprite.r3, .dragon-sprite.l3 {
+  background-position: calc(-200px * var(--sprite-scale)) calc(-100px * var(--sprite-scale));
+}
+.dragon-sprite.r4, .dragon-sprite.l4 {
+  background-position: calc(-300px * var(--sprite-scale)) calc(-100px * var(--sprite-scale));
+}
+.dragon-sprite.l1, .dragon-sprite.l2, .dragon-sprite.l3, .dragon-sprite.l4 {
+  transform: scaleX(-1);
+}

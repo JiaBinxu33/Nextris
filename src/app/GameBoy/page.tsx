@@ -3,17 +3,15 @@ import Screen from "@/app/components/Screen";
 import Tetromino from "@/app/components/Tetromino";
 import { TetrominoShape } from "@/app/static/shaps";
 import { useState, useEffect } from "react";
-import { StoreContext, matrixStore } from "@/app/store"; // 1. 导入我们创建的 Context 和实例
-import { getRandomTetromino } from "@/app/utils/getRandomTeromino";
+import { StoreContext, matrixStore } from "@/app/store";
 import Control from "@/app/components/Control";
-import { COLUMN_COLS, COLUMN_ROWS } from "@/app/static/shaps";
+import { SPEEDS } from "@/app/static/shaps";
 
 const DashLine = ({ position }: { position: "left" | "right" }) => (
   <div className="flex gap-x-[calc(var(--block-size)*0.5)]">
     {position === "left" && (
       <div className="w-[calc(var(--block-size)*3)] h-[calc(var(--block-size)*0.5)] bg-black"></div>
     )}
-    <div className="w-[calc(var(--block-size)*0.5)] h-[calc(var(--block-size)*0.5)] bg-black"></div>
     <div className="w-[calc(var(--block-size)*0.5)] h-[calc(var(--block-size)*0.5)] bg-black"></div>
     <div className="w-[calc(var(--block-size)*0.5)] h-[calc(var(--block-size)*0.5)] bg-black"></div>
     <div className="w-[calc(var(--block-size)*0.5)] h-[calc(var(--block-size)*0.5)] bg-black"></div>
@@ -29,24 +27,48 @@ export default function GameBoy() {
     setBlockSize(blockSize);
   };
   const { S, O, L, J, T, Z, I, T_MIRROR, I_MIRROR } = TetrominoShape;
+
+  // --- 核心修改在这里 ---
   useEffect(() => {
-    // 1. 游戏开始时，初始化“当前”和“下一个”方块
-    matrixStore.spawnTetromino(getRandomTetromino());
-    matrixStore.spawnNextTetromino(getRandomTetromino());
+    let gameLoopTimeout: NodeJS.Timeout | null = null;
 
-    // 2. 游戏主循环
-    const gameLoop = setInterval(() => {
-      if (!matrixStore.willCollide()) {
-        matrixStore.moveTetromino();
-      } else {
-        matrixStore.settleTetromino();
+    const loop = () => {
+      // 在循环的每一次执行时，都直接从 store 中获取最新的状态
+      const {
+        isGameStarted,
+        isPaused,
+        isGameOver,
+        isAnimating,
+        speedLevel, // 关键：在这里获取最新的 speedLevel
+      } = matrixStore;
+
+      if (isGameStarted && !isPaused && !isGameOver && !isAnimating) {
+        if (!matrixStore.willCollide()) {
+          matrixStore.moveTetromino();
+        } else {
+          matrixStore.settleTetromino();
+        }
       }
-    }, 1000);
 
-    return () => {
-      clearInterval(gameLoop);
+      // 1. 根据最新的 speedLevel 计算出下一次循环的间隔时间
+      const currentSpeed = SPEEDS[speedLevel - 1];
+
+      // 2. 使用 setTimeout 来安排下一次循环
+      //    这样每次循环的间隔时间都可以是动态的
+      gameLoopTimeout = setTimeout(loop, currentSpeed);
     };
-  }, []);
+
+    // 启动第一次循环
+    loop();
+
+    // 组件卸载时，清除定时器
+    return () => {
+      if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+      }
+    };
+  }, []); // 3. 空依赖数组，确保这个 useEffect 只运行一次，循环逻辑在内部自持
+
   return (
     <StoreContext.Provider value={matrixStore}>
       <div
@@ -75,7 +97,6 @@ export default function GameBoy() {
           justify-between
           -translate-y-[calc(var(--block-size)*0.86)]
           w-full
-          
           "
           >
             <DashLine position="left" />
@@ -93,7 +114,6 @@ export default function GameBoy() {
         left-[calc(var(--block-size)*0.5)]
         "
         >
-          {/* 恢复使用 isColumn prop */}
           <Tetromino shape={Z} isColumn />
           <Tetromino shape={T_MIRROR} isColumn />
           <Tetromino shape={O} isColumn />
@@ -108,7 +128,6 @@ export default function GameBoy() {
         right-[calc(var(--block-size)*0.5)]
         "
         >
-          {/* 恢复使用 isColumn prop */}
           <Tetromino shape={S} isColumn />
           <Tetromino shape={T} isColumn />
           <Tetromino shape={O} isColumn />

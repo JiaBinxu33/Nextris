@@ -1,23 +1,23 @@
 // src/app/store/MatrixStore.ts
 
-import { makeAutoObservable, computed ,runInAction } from "mobx";
-import { GRID_HEIGHT, GRID_WIDTH, GRID_BLOCK_STATE } from "@/app/static/grid"; // 1. 导入 GRID_BLOCK_STATE
-import { SHAPE_DEFINITIONS, TetrominoShape } from "@/app/static/shaps";
+import { makeAutoObservable, computed, runInAction } from "mobx";
+import { GRID_HEIGHT, GRID_WIDTH, GRID_BLOCK_STATE } from "@/app/static/grid";
+import { SHAPE_DEFINITIONS, TetrominoShape ,SPEEDS ,GameLevel } from "@/app/static/shaps";
 import { getRandomTetromino } from "@/app/utils/getRandomTeromino";
 
-// --- 类型定义 ---
-// 2. 更新 CellState 类型，使其使用 GRID_BLOCK_STATE 的值
-export type CellState = (typeof GRID_BLOCK_STATE)[keyof typeof GRID_BLOCK_STATE];
+export type CellState =
+  (typeof GRID_BLOCK_STATE)[keyof typeof GRID_BLOCK_STATE];
 export type Grid = CellState[][];
-type Direction = 'down' | 'left' | 'right';
+type Direction = "down" | "left" | "right";
 
-// 3. 更新 createEmptyGrid 以使用 HIDDEN 状态
 const createEmptyGrid = (): Grid =>
-  Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN));
+  Array.from({ length: GRID_HEIGHT }, () =>
+    Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN)
+  );
 
 interface ICurrentTetromino {
   shape: TetrominoShape;
-  rotationIndex: number; // 追踪当前是哪个旋转形态
+  rotationIndex: number;
   position: {
     x: number;
     y: number;
@@ -25,10 +25,15 @@ interface ICurrentTetromino {
 }
 
 export class MatrixStore {
-  // --- 状态 (State) ---
   grid: Grid = createEmptyGrid();
   currentTetromino: ICurrentTetromino | null = null;
   nextTetromino: ICurrentTetromino | null = null;
+  isGameOver: boolean = false;
+  isAnimating: boolean = false;
+  isPaused:boolean = false;
+  clearedLines:number = 0;
+  speedLevel:number = 1;
+  isGameStarted: boolean = false;
 
   constructor() {
     makeAutoObservable(this, {
@@ -36,37 +41,94 @@ export class MatrixStore {
     });
   }
 
-  // --- 计算值 (Computed Value) ---
   get renderGrid(): Grid {
-    const gridCopy = this.grid.map(row => [...row]);
-
+    const gridCopy = this.grid.map((row) => [...row]);
     if (this.currentTetromino) {
       const { shape, position, rotationIndex } = this.currentTetromino;
-      // 2. 根据 rotationIndex 从 SHAPE_DEFINITIONS 获取正确的形状
       const shapeLayout = SHAPE_DEFINITIONS[shape]?.[rotationIndex] || [];
-      
-      shapeLayout.forEach(posKey => {
-        const [row, col] = posKey.split('-').map(Number);
-        // 3. 调整坐标计算的基准，以 4x4 网格的中心 (大约 2.5) 为准
-        const blockX = position.x + col - 2.5; 
+      shapeLayout.forEach((posKey) => {
+        const [row, col] = posKey.split("-").map(Number);
+        const blockX = position.x + col - 2.5;
         const blockY = position.y + row - 2.5;
-
-        if (gridCopy[Math.floor(blockY)] && gridCopy[Math.floor(blockY)][Math.floor(blockX)] !== undefined) {
-          gridCopy[Math.floor(blockY)][Math.floor(blockX)] = GRID_BLOCK_STATE.VISIBLE;
+        if (
+          gridCopy[Math.floor(blockY)] &&
+          gridCopy[Math.floor(blockY)][Math.floor(blockX)] !== undefined
+        ) {
+          gridCopy[Math.floor(blockY)][Math.floor(blockX)] =
+            GRID_BLOCK_STATE.VISIBLE;
         }
       });
     }
-
     return gridCopy;
   }
 
-  // --- 动作 (Actions) ---
+  // --- 动画与游戏状态核心修改 ---
+
+  gameOver = () => {
+    // 防止在动画播放时重复触发
+    if (this.isAnimating) return;
+
+    this.isGameOver = true;
+    this.isAnimating = true;
+    this.currentTetromino = null; // 立即清除当前方块
+
+    this.playGameOverAnimation();
+  };
+
+  playGameOverAnimation = async () => {
+    // 阶段 1: 从下往上，用 VISIBLE 状态填充 grid
+    for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      runInAction(() => {
+        // 直接修改 this.grid 来驱动 Matrix 组件的重新渲染
+        this.grid[y] = Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.VISIBLE);
+      });
+    }
+
+    // 填充完毕后，短暂地停顿一下
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // 阶段 2: 从上往下，用 HIDDEN 状态清空 grid
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      runInAction(() => {
+        this.grid[y] = Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN);
+      });
+    }
+
+    // 阶段 3: 动画完全结束后，重置游戏状态
+    runInAction(() => {
+      this.isAnimating = false;
+      this.isGameStarted = false; // 切换到“未开始”状态，以显示欢迎页
+      this.resetGame();
+    });
+  };
+
+  startGame = () => {
+    // 3. 只有在游戏未开始时才能开始
+    if (this.isGameStarted) return;
+    
+    this.isGameStarted = true;
+    this.resetGame();
+    this.spawnTetromino(getRandomTetromino());
+    this.spawnNextTetromino(getRandomTetromino());
+  };
   
-  // 5. 重构 settleTetromino 以实现 SETTLED 效果
+  // ... (其他所有方法如 settleTetromino, moveTetromino 等保持不变)
+
   settleTetromino = () => {
     if (!this.currentTetromino) return;
 
-    // 固化逻辑的第一部分：标记为 SETTLED
+    const { shape, position, rotationIndex } = this.currentTetromino;
+    const shapeLayout = SHAPE_DEFINITIONS[shape]?.[rotationIndex] || [];
+    for (const posKey of shapeLayout) {
+        const [row] = posKey.split('-').map(Number);
+        const blockY = Math.floor(position.y + row - 2.5);
+        if (blockY < 0) {
+            this.gameOver();
+            return; 
+        }
+    }
     const settledGrid = this.renderGrid;
     for (let y = 0; y < settledGrid.length; y++) {
       for (let x = 0; x < settledGrid[y].length; x++) {
@@ -79,9 +141,8 @@ export class MatrixStore {
       }
     }
     this.grid = settledGrid;
-    this.currentTetromino = null; // 立即清空，防止渲染冲突
-
-    // 固化逻辑的第二部分：变为 VISIBLE 并检查消行
+    
+    this.currentTetromino = null;
     setTimeout(() => {
       runInAction(() => {
         const finalGrid = this.grid.map((row) =>
@@ -90,18 +151,13 @@ export class MatrixStore {
           )
         );
         this.grid = finalGrid;
-
-        // --- 新增的消行逻辑 ---
         this.checkAndClearLines();
       });
-    }, 50); // 缩短固化闪烁时间
+    }, 50);
   };
   
-  // --- 新增：检查并处理消行的主方法 ---
   checkAndClearLines = () => {
     const linesToClear: number[] = [];
-    
-    // 1. 从下到上检查每一行是否已满
     for (let y = 0; y < GRID_HEIGHT; y++) {
       const isLineFull = this.grid[y].every(
         (cell) => cell === GRID_BLOCK_STATE.VISIBLE
@@ -110,41 +166,34 @@ export class MatrixStore {
         linesToClear.push(y);
       }
     }
-
-    // 2. 如果有需要消除的行
     if (linesToClear.length > 0) {
+      runInAction(() => {
+        this.clearedLines += linesToClear.length;
+      });
       this.animateAndClear(linesToClear);
     } else {
-      // 3. 如果没有，则正常生成下一个方块
       this.spawnNext();
     }
   };
 
-  // --- 新增：处理闪烁动画和删除的核心方法 ---
   animateAndClear = async (lines: number[]) => {
-    // 闪烁三次
     for (let i = 0; i < 3; i++) {
-      await this.flashLines(lines, GRID_BLOCK_STATE.CLEARING); // 变为 CLEARING (消失)
+      await this.flashLines(lines, GRID_BLOCK_STATE.CLEARING);
       await new Promise(resolve => setTimeout(resolve, 100));
-      await this.flashLines(lines, GRID_BLOCK_STATE.VISIBLE); // 变为 VISIBLE (出现)
+      await this.flashLines(lines, GRID_BLOCK_STATE.VISIBLE);
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-
-    // 动画结束后，执行删除和下落
     runInAction(() => {
       let newGrid = this.grid.filter((_, index) => !lines.includes(index));
-      
       const emptyLine = Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN);
       for (let i = 0; i < lines.length; i++) {
         newGrid.unshift([...emptyLine]);
       }
-      
       this.grid = newGrid;
-      this.spawnNext(); // 生成下一个方块
+      this.spawnNext();
     });
   };
 
-  // --- 新增：一个辅助方法，用于切换行的状态 ---
   flashLines = (lines: number[], state: CellState) => {
     runInAction(() => {
       const newGrid = this.grid.map((row, y) => {
@@ -157,17 +206,16 @@ export class MatrixStore {
     });
   };
   
-  // --- 新增：生成下一个方塊的通用方法 ---
   spawnNext = () => {
     this.currentTetromino = this.nextTetromino;
     this.spawnNextTetromino(getRandomTetromino());
   }
-  
+
   spawnTetromino = (shape: TetrominoShape) => {
     this.currentTetromino = {
       shape: shape,
       rotationIndex: 0,
-      position: { x: 4, y: 0 },
+      position: { x: 5, y: 0 },
     };
   };
 
@@ -175,72 +223,56 @@ export class MatrixStore {
     this.nextTetromino = {
       shape: shape,
       rotationIndex: 0,
-      position: { x: 4, y: 0 },
+      position: { x: 5, y: 0 },
     };
   };
   
   willCollide = (
-    // a. 它可以接收一个可选的“幽灵方块”对象用于预测
     ghostTetromino: ICurrentTetromino | null = null, 
-    // b. 如果不传幽灵方块，则根据方向来自己创建一个 (兼容移动)
     direction: Direction = 'down'
   ) => {
-    // 如果连当前方块都没有，那就不可能碰撞
     if (!this.currentTetromino) {
-      return true; // 返回 true 以阻止任何操作
+      return true;
     }
-
-    // c. 决定我们到底要测试哪个方块
     const ghostToTest = ghostTetromino || this.createGhostForMove(direction);
     if (!ghostToTest) {
       return true;
     }
-
     const { shape, position, rotationIndex } = ghostToTest;
     const shapeLayout = SHAPE_DEFINITIONS[shape]?.[rotationIndex] || [];
-
     for (const posKey of shapeLayout) {
       const [row, col] = posKey.split('-').map(Number);
       const absoluteX = Math.floor(position.x + col - 2.5);
       const absoluteY = Math.floor(position.y + row - 2.5);
-
       if (absoluteX < 0 || absoluteX >= GRID_WIDTH) {
-        return true; // 撞到左右墙壁
+        return true;
       }
       if (absoluteY >= GRID_HEIGHT) {
-        return true; // 撞到下边界
+        return true;
       }
       if (absoluteY < 0) {
-        continue; // 在屏幕上方，不算碰撞
+        continue;
       }
       if (this.grid[absoluteY] && this.grid[absoluteY][absoluteX] !== GRID_BLOCK_STATE.HIDDEN) {
-        return true; // 撞到已固定的方块
+        return true;
       }
     }
-
-    return false; // 如果所有检测都通过，则没有碰撞
+    return false;
   };
   
-  // d. 这是一个新的辅助函数，专门为移动操作创建“幽灵”
   createGhostForMove = (direction: Direction): ICurrentTetromino | null => {
     if (!this.currentTetromino) return null;
-
     let { x, y } = this.currentTetromino.position;
     if (direction === 'down') y += 1;
     if (direction === 'left') x -= 1;
     if (direction === 'right') x += 1;
-    
     return { ...this.currentTetromino, position: { x, y } };
   }
 
   moveTetromino = (direction: Direction = "down") => {
-    if (!this.currentTetromino) {
+    if (!this.currentTetromino || this.isPaused) {
       return;
     }
-
-    // 核心修改：在调用 willCollide 时，
-    // 第一个参数传 null (因为我们希望它在内部根据 direction 创建 ghost)，
-    // 第二个参数传递 direction。
     if (direction === "right" && !this.willCollide(null, "right")) {
       this.currentTetromino.position.x += 1;
     }
@@ -251,44 +283,84 @@ export class MatrixStore {
       this.currentTetromino.position.y += 1;
     }
   };
+
+  adjustStartLevel = (direction: 'left' | 'right') => {
+    // 此方法只在游戏未开始时生效
+    if (this.isGameStarted) return;
+
+    runInAction(() => {
+      let newLevel = this.speedLevel;
+      if (direction === 'right') {
+        // 等级 +1，如果超过6，则循环回到1
+        newLevel = (newLevel + 1 > 6) ? 1 : (newLevel + 1);
+      } else { // 'left'
+        // 等级 -1，如果小于1，则循环回到6
+        newLevel = (newLevel - 1 < 1) ? 6 : (newLevel - 1);
+      }
+      this.speedLevel = newLevel as GameLevel;
+    });
+  };
+
   rotateTetromino = () => {
-    if (!this.currentTetromino) {
+    if (!this.currentTetromino || this.isPaused) {
       return;
     }
     const { shape, rotationIndex, position } = this.currentTetromino;
     const rotationStates = SHAPE_DEFINITIONS[shape];
-    
-    // 1. 计算出“下一个”旋转状态的索引
     const nextRotationIndex = (rotationIndex + 1) % rotationStates.length;
-
-    // 2. 创建一个代表旋转后状态的“幽灵方块”
     const ghostForRotate: ICurrentTetromino = {
       shape: shape,
-      rotationIndex: nextRotationIndex, // 使用新的索引
-      position: position, // 位置暂时不变
+      rotationIndex: nextRotationIndex,
+      position: position,
     };
-
-    // 3. 使用我们强大的新 willCollide 函数来预测旋转是否可行
     if (!this.willCollide(ghostForRotate)) {
-      // 4. 如果预测没有碰撞，就安全地更新当前方块的旋转索引
       this.currentTetromino.rotationIndex = nextRotationIndex;
     }
-    // （高级技巧：如果碰撞了，还可以尝试左右移动一格再试，即“踢墙”，但我们暂时不实现）
   };
 
   dropTetromino = () =>{
-   
-    if (!this.currentTetromino) return null;
+    if (!this.isGameStarted) {
+      this.startGame();
+      return;
+    }
 
+    if (!this.currentTetromino || this.isPaused) {
+      return;
+    }
+    
     let { x, y } = this.currentTetromino.position;
-
     const ghostTetromino = { ...this.currentTetromino, position: { x, y } };
-    // 触碰到方块为结束条件
     while(!this.willCollide(ghostTetromino)){
       ghostTetromino.position.y++;
     }
     ghostTetromino.position.y --;
     this.currentTetromino = ghostTetromino;
     this.settleTetromino();
+  }
+
+  gameEnd = () =>{
+    this.currentTetromino = null;
+    this.grid = []
+  }
+
+  resetGame = () => {
+    this.grid = createEmptyGrid();
+    this.currentTetromino = null; // 4. 重置时确保当前方块为空
+    this.nextTetromino = null;
+    this.isGameOver = false;
+    this.clearedLines = 0; 
+  };
+
+  togglePause = () =>{
+    if (!this.isGameStarted) {
+      this.startGame();
+      return;
+    }
+    if (this.isGameOver || this.isAnimating) return;
+    this.isPaused = !this.isPaused;
+  }
+
+  setSpeedLevel = (level:GameLevel) =>{
+    this.speedLevel = level
   }
 }
