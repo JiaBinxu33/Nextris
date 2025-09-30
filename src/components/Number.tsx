@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from "react";
 import clsx from "clsx";
 
+// 【核心修复】从环境变量获取基础路径
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const spriteUrl = `url(${basePath}/sprite.png)`;
+
 interface NumberProps {
   number?: number | string;
   length?: number;
@@ -12,7 +16,6 @@ function formatTime(num: number): string[] {
   return num < 10 ? [`0`, `${num}`] : `${num}`.split("");
 }
 
-// 创建一个新的内部组件来处理时间逻辑
 const TimeDisplay = () => {
   const [time, setTime] = useState(new Date());
   const [isClient, setIsClient] = useState(false);
@@ -26,7 +29,6 @@ const TimeDisplay = () => {
   }, []);
 
   if (!isClient) {
-    // 在服务器或客户端首次渲染时返回占位符
     const timeArr = ["n", "n", "d_c", "n", "n"];
     return (
       <div className="flex items-center justify-end">
@@ -34,6 +36,7 @@ const TimeDisplay = () => {
           <span
             key={index}
             className={clsx("digit-sprite", `digit-${digit}`)}
+            style={{ backgroundImage: spriteUrl }} // 【核心修复】动态应用 style
           />
         ))}
       </div>
@@ -48,7 +51,11 @@ const TimeDisplay = () => {
   return (
     <div className="flex items-center justify-end">
       {timeArr.map((digit, index) => (
-        <span key={index} className={clsx("digit-sprite", `digit-${digit}`)} />
+        <span
+          key={index}
+          className={clsx("digit-sprite", `digit-${digit}`)}
+          style={{ backgroundImage: spriteUrl }} // 【核心修复】动态应用 style
+        />
       ))}
     </div>
   );
@@ -59,12 +66,10 @@ export default function Number({
   length = 6,
   isTime = false,
 }: NumberProps) {
-  // --- 时钟模式 ---
   if (isTime) {
     return <TimeDisplay />;
   }
 
-  // --- 原始的数字显示逻辑 (保持不变) ---
   const numberStr = String(number);
   const numberArr = numberStr.split("");
   const paddingLength = Math.max(0, length - numberArr.length);
@@ -73,7 +78,11 @@ export default function Number({
   return (
     <div className="flex items-center justify-end">
       {paddedArr.map((digit, index) => (
-        <span key={index} className={clsx("digit-sprite", `digit-${digit}`)} />
+        <span
+          key={index}
+          className={clsx("digit-sprite", `digit-${digit}`)}
+          style={{ backgroundImage: spriteUrl }}
+        />
       ))}
     </div>
   );

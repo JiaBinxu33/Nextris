@@ -4,7 +4,10 @@ import React, { useState, useEffect } from "react";
 import clsx from "clsx";
 import { useTranslations } from "next-intl";
 
-// 这是一个独立的组件，负责欢迎动画
+// 【核心修复】从环境变量获取基础路径
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const spriteUrl = `url(${basePath}/sprite.png)`;
+
 export default function Welcome() {
   const [isShowing, setIsShowing] = useState(false);
   const [spriteClass, setSpriteClass] = useState("r1");
@@ -15,7 +18,7 @@ export default function Welcome() {
     let sequenceTimeout: NodeJS.Timeout;
 
     const animate = () => {
-      let direction = "r"; // 'r' for right, 'l' for left
+      let direction = "r";
       let runCount = 0;
 
       const set = (callback: () => void, delay: number) => {
@@ -76,7 +79,6 @@ export default function Welcome() {
       startDragonAnimation();
     };
 
-    // 动画序列：闪烁三次后开始正式动画
     const startSequence = () => {
       setIsShowing(true);
       animationTimeout = setTimeout(() => {
@@ -87,7 +89,7 @@ export default function Welcome() {
             setIsShowing(false);
             animationTimeout = setTimeout(() => {
               setIsShowing(true);
-              animate(); // 开始龙的动画
+              animate();
             }, 150);
           }, 150);
         }, 150);
@@ -109,15 +111,14 @@ export default function Welcome() {
         isShowing ? "opacity-100" : "opacity-0"
       )}
     >
-      {/* 小恐龙的容器和样式，移植自原作者的 logo.less */}
       <div
         className={clsx("dragon-sprite", spriteClass)}
         style={{
           width: `calc(var(--block-size) * 4)`,
           height: `calc(var(--block-size) * 4.3)`,
+          backgroundImage: spriteUrl,
         }}
       />
-      {/* 文字部分 */}
       <p
         className="text-black text-center"
         style={{

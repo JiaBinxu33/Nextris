@@ -29,8 +29,7 @@ body {
 
 /* 这是所有数字格子共享的样式 */
 .digit-sprite {
-  /* 【核心修复】改回简单的根路径 */
-  background-image: url('/sprite.png');
+  /* 【核心修复】移除 background-image，我们将在组件中动态设置它 */
   background-repeat: no-repeat;
   
   --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
@@ -61,8 +60,7 @@ body {
 
 /* 新增 Welcome 组件的样式 */
 .dragon-sprite {
-  /* 【核心修复】改回简单的根路径 */
-  background-image: url('/sprite.png');
+  /* 【核心修复】移除 background-image */
   background-repeat: no-repeat;
   --sprite-scale: calc(var(--block-size) * 4 / 80px); /* 80px 是原始龙的宽度 */
 
@@ -87,8 +85,7 @@ body {
 
 /* --- 新增 Music 和 PauseIndicator 的样式 --- */
 .music-sprite, .pause-sprite {
-  /* 【核心修复】改回简单的根路径 */
-  background-image: url('/sprite.png');
+  /* 【核心修复】移除 background-image */
   background-repeat: no-repeat;
   --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
   background-size: calc(400px * var(--sprite-scale)) calc(186px * var(--sprite-scale));
