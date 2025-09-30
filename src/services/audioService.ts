@@ -10,6 +10,13 @@ const SOUND_TIMES = {
     start: { offset: 3.7202, duration: 3.6224 },
 };
 
+// 为 window 增加可选的 webkitAudioContext 声明，避免类型断言
+declare global {
+    interface Window {
+        webkitAudioContext?: typeof AudioContext;
+    }
+}
+
 class AudioService {
     private audioContext: AudioContext | null = null;
     private audioBuffer: AudioBuffer | null = null;
@@ -19,7 +26,11 @@ class AudioService {
     // 仅在浏览器环境中初始化 AudioContext
     constructor() {
         if (typeof window !== 'undefined') {
-            this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            // 使用安全的构造器选择
+            const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextCtor) {
+                this.audioContext = new AudioContextCtor();
+            }
         }
     }
 
@@ -29,7 +40,11 @@ class AudioService {
         this.isInitialized = true;
 
         try {
-            const response = await fetch('/music.mp3'); // 从 public 文件夹加载
+            // --- 核心修复 ---
+            // 从环境变量读取在 next.config.ts 中设置的基础路径
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            const response = await fetch(`${basePath}/music.mp3`); 
+            
             const arrayBuffer = await response.arrayBuffer();
             this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
         } catch (error) {

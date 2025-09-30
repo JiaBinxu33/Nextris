@@ -1,39 +1,40 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useEffect, useState } from "react";
+import { locales, defaultLocale, type Locale } from "@/i18n";
 
-// import { Button } from '@/components/ui/button';
-import { setLocale } from "@/i18n/index";
-import { type Locale, locales } from "@/i18n/config";
+const COOKIE_NAME = "NEXT_LOCALE";
 
 export default function LangSwitch() {
-  const [ZH, EN] = locales;
-  const locale = useLocale();
+  const [currentLocale, setCurrentLocale] = useState<Locale>(defaultLocale);
 
-  // 切换语言
-  function onChangeLang(value: Locale) {
-    const locale = value as Locale;
-    setLocale(locale);
+  useEffect(() => {
+    // 组件加载时，从 localStorage 读取语言环境
+    const savedLocale = localStorage.getItem(COOKIE_NAME) as Locale | null;
+    if (savedLocale && locales.includes(savedLocale)) {
+      setCurrentLocale(savedLocale);
+    }
+  }, []);
+
+  function onChangeLang(newLocale: Locale) {
+    localStorage.setItem(COOKIE_NAME, newLocale);
+    // 重新加载页面以应用新的语言包
+    window.location.reload();
   }
 
-  const isZH = locale === ZH;
-  const nextLocale = isZH ? EN : ZH;
+  const isZH = currentLocale === "zh";
+  const nextLocale = isZH ? "en" : "zh";
   const buttonLabel = isZH ? "中" : "EN";
   const title = isZH ? "切换为英文" : "Switch to Chinese";
 
   return (
     <button
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-all hover:border-gray-400 hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
-      style={
-        {
-          padding: `calc(var(--block-size) * 2)`,
-        } as React.CSSProperties
-      }
+      className="fixed top-4 right-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-all hover:border-gray-400 hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
       onClick={() => onChangeLang(nextLocale)}
       aria-label="Toggle Lang"
       title={title}
     >
-      <span className="text-xs font-semibold tracking-wide">{buttonLabel}</span>
+      <span className="text-sm font-semibold tracking-wide">{buttonLabel}</span>
       <span className="sr-only">Toggle Lang</span>
     </button>
   );

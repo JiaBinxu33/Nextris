@@ -287,7 +287,7 @@ export class MatrixStore {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     runInAction(() => {
-      let newGrid = this.grid.filter((_, index) => !lines.includes(index));
+      const newGrid = this.grid.filter((_, index) => !lines.includes(index));
       const emptyLine = Array(GRID_WIDTH).fill(GRID_BLOCK_STATE.HIDDEN);
       for (let i = 0; i < lines.length; i++) {
         newGrid.unshift([...emptyLine]);
@@ -446,7 +446,7 @@ export class MatrixStore {
       return;
     }
     audioService.playDrop(); 
-    let { x, y } = this.currentTetromino.position;
+    const { x, y } = this.currentTetromino.position;
     const ghostTetromino = { ...this.currentTetromino, position: { x, y } };
     while(!this.willCollide(ghostTetromino)){
       ghostTetromino.position.y++;

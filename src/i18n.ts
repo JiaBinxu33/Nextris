@@ -1,4 +1,3 @@
-// src/i18n/config.ts
-export type Locale = (typeof locales)[number];
-export const locales = ['zh', 'en'] as const;
-export const defaultLocale: Locale = 'zh';
+export const locales = ['en', 'zh'] as const;
+export const defaultLocale = 'en'; // 默认语言
+export type Locale = typeof locales[number];

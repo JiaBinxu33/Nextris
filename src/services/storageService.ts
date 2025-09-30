@@ -1,7 +1,5 @@
-// app/services/storageService.ts
-
 import { Grid, ICurrentTetromino } from "@/store/MatrixStore";
-import { GameLevel, TetrominoShape } from "@/static/shaps";
+import { GameLevel } from "@/static/shaps";
 
 // 定义存储在 localStorage 中的键名
 const STORAGE_KEY = "TETRIS_GAME_STATE";
