@@ -29,22 +29,18 @@ body {
 
 /* 这是所有数字格子共享的样式 */
 .digit-sprite {
+  /* 【核心修复】改回简单的根路径 */
   background-image: url('/sprite.png');
   background-repeat: no-repeat;
-
-  /* 将除数 24 改为 24px，
-    这样 px / px 就会得到一个纯数字（无单位的比例）
-  */
+  
   --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
 
-  /* 后续的计算现在就是有效的了 */
   width: calc(14px * var(--sprite-scale));
   height: calc(24px * var(--sprite-scale));
 
   background-size: calc(400px * var(--sprite-scale)) calc(186px * var(--sprite-scale));
 }
 
-/* 4. 将计算移到变量定义中，让 background-position 更简单 */
 .digit-0 { --x-pos: -75px; --y-pos: -25px; }
 .digit-1 { --x-pos: -89px; --y-pos: -25px; }
 .digit-2 { --x-pos: -103px; --y-pos: -25px; }
@@ -59,14 +55,14 @@ body {
 .digit-d { --x-pos: -243px; --y-pos: -25px; }
 .digit-d_c { --x-pos: -229px; --y-pos: -25px; }
 
-/* 5. 创建一个通用的规则来应用计算后的 background-position */
 [class^="digit-"] {
   background-position: calc(var(--x-pos) * var(--sprite-scale)) calc(var(--y-pos) * var(--sprite-scale));
 }
 
 /* 新增 Welcome 组件的样式 */
 .dragon-sprite {
-  background-image: url('/sprite.png'); /* 确保你的 public 目录下有这张图 */
+  /* 【核心修复】改回简单的根路径 */
+  background-image: url('/sprite.png');
   background-repeat: no-repeat;
   --sprite-scale: calc(var(--block-size) * 4 / 80px); /* 80px 是原始龙的宽度 */
 
@@ -90,8 +86,8 @@ body {
 }
 
 /* --- 新增 Music 和 PauseIndicator 的样式 --- */
-
 .music-sprite, .pause-sprite {
+  /* 【核心修复】改回简单的根路径 */
   background-image: url('/sprite.png');
   background-repeat: no-repeat;
   --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
@@ -103,19 +99,12 @@ body {
   height: calc(21px * var(--sprite-scale));
 }
 
-/* 【关键修改】
-  音效开启时的样式 (原作者坐标: -150px -75px)
-*/
 .music-on {
   background-position: calc(-175px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
 }
 
-/* 【关键修改】
-  音效关闭时的样式 (原作者坐标: -175px -75px)
-*/
 .music-off {
   background-position: calc(-150px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
-
 }
 
 .pause-sprite {
@@ -124,16 +113,10 @@ body {
   transition: opacity 150ms ease-in-out; /* 为闪烁增加过渡效果 */
 }
 
-/* 【关键修改】
-  暂停时的图标, 亮的 (原作者坐标: -75px -75px) 
-*/
 .pause-on {
   background-position: calc(-75px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
 }
 
-/* 【关键修改】
-  未暂停时的图标, 暗的 (原作者坐标: -100px -75px) 
-*/
 .pause-off {
   background-position: calc(-100px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
 }
