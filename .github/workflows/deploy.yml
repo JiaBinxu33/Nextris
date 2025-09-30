@@ -1,0 +1,41 @@
+name: Deploy Nextris to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 确保这是你的主分支名
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9 # 与你的 pnpm-lock.yaml 版本匹配
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.17.0" # 与你 package.json 的要求匹配
+          cache: "pnpm"
+
+      - name: Install dependencies 📦
+        run: pnpm install
+
+      - name: Build project 🏗️
+        env:
+          GITHUB_ACTIONS: true # 传入环境变量，触发 next.config.ts 中的配置
+        run: pnpm build
+
+      - name: Add .nojekyll file
+        run: touch ./out/.nojekyll
+
+      - name: Deploy 🚀
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
