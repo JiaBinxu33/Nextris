@@ -1,0 +1,27 @@
+{
+    "Welcome": {
+      "title": "俄罗斯方块"
+    },
+    "Screen": {
+      "clearedLines": "消除行",
+      "startLines": "起始行",
+      "level": "级别",
+      "next": "下一个",
+      "score": "得分",
+      "highScore": "最高分",
+      "lastScore": "上轮得分"
+    },
+    "Control": {
+      "rotate": "旋转",
+      "down": "下移",
+      "left": "左移",
+      "right": "右移",
+      "drop": "掉落(space)",
+      "pause": "暂停(P)",
+      "reset": "重玩(R)",
+      "music": "音效(M)"
+    },
+    "GameBoy": {
+      "title": "俄罗斯方块"
+    }
+  }

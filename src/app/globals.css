@@ -88,3 +88,52 @@ body {
 .dragon-sprite.l1, .dragon-sprite.l2, .dragon-sprite.l3, .dragon-sprite.l4 {
   transform: scaleX(-1);
 }
+
+/* --- 新增 Music 和 PauseIndicator 的样式 --- */
+
+.music-sprite, .pause-sprite {
+  background-image: url('/sprite.png');
+  background-repeat: no-repeat;
+  --sprite-scale: calc(var(--block-size) * 1.2 / 24px);
+  background-size: calc(400px * var(--sprite-scale)) calc(186px * var(--sprite-scale));
+}
+
+.music-sprite {
+  width: calc(25px * var(--sprite-scale));
+  height: calc(21px * var(--sprite-scale));
+}
+
+/* 【关键修改】
+  音效开启时的样式 (原作者坐标: -150px -75px)
+*/
+.music-on {
+  background-position: calc(-175px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
+}
+
+/* 【关键修改】
+  音效关闭时的样式 (原作者坐标: -175px -75px)
+*/
+.music-off {
+  background-position: calc(-150px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
+
+}
+
+.pause-sprite {
+  width: calc(20px * var(--sprite-scale));
+  height: calc(18px * var(--sprite-scale));
+  transition: opacity 150ms ease-in-out; /* 为闪烁增加过渡效果 */
+}
+
+/* 【关键修改】
+  暂停时的图标, 亮的 (原作者坐标: -75px -75px) 
+*/
+.pause-on {
+  background-position: calc(-75px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
+}
+
+/* 【关键修改】
+  未暂停时的图标, 暗的 (原作者坐标: -100px -75px) 
+*/
+.pause-off {
+  background-position: calc(-100px * var(--sprite-scale)) calc(-75px * var(--sprite-scale));
+}

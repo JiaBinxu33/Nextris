@@ -1,0 +1,27 @@
+{
+    "Welcome": {
+      "title": "TETRIS"
+    },
+    "Screen": {
+      "clearedLines": "LINES",
+      "startLines": "START",
+      "level": "LEVEL",
+      "next": "NEXT",
+      "score": "SCORE",
+      "highScore": "HI-SCORE",
+      "lastScore": "LAST"
+    },
+    "Control": {
+      "rotate": "Rotate",
+      "down": "Down",
+      "left": "Left",
+      "right": "Right",
+      "drop": "Drop(space)",
+      "pause": "Pause(P)",
+      "reset": "Reset(R)",
+      "music": "Music(M)"
+    },
+    "GameBoy": {
+      "title": "TETRIS"
+    }
+  }
