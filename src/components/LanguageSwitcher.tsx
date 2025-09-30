@@ -24,6 +24,11 @@ export default function LangSwitch() {
   return (
     <button
       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 shadow-sm transition-all hover:border-gray-400 hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+      style={
+        {
+          padding: `calc(var(--block-size) * 2)`,
+        } as React.CSSProperties
+      }
       onClick={() => onChangeLang(nextLocale)}
       aria-label="Toggle Lang"
       title={title}
