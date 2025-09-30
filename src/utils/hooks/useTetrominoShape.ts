@@ -1,4 +1,4 @@
-import { SHAPE_DEFINITIONS } from "@/static/shaps";
+import { SHAPE_DEFINITIONS, TetrominoShape } from "@/static/shaps"; // 1. 导入 TetrominoShape 类型
 
 interface ITetrominoData {
   location: number[];
@@ -6,11 +6,11 @@ interface ITetrominoData {
   isHidden: boolean;
 }
 
-// 确保函数签名可以接收 rows 和 cols
+// 2. 将 'shape' 参数的类型从 string 修改为 TetrominoShape
 export default function useTetrominoShape(
-  shape: string,
-  rows: number = 4, // 默认 4 行
-  cols: number = 4  // 默认 4 列
+  shape: TetrominoShape,
+  rows: number = 4,
+  cols: number = 4
 ): ITetrominoData[] {
   const activeLocations = SHAPE_DEFINITIONS[shape]?.[0] || [];
 
